@@ -27,6 +27,24 @@ def fetch_trending_tiktok():
         trending_data.append({"title": title, "url": video_url})
     return trending_data
 
+# Instagram Trending
+def fetch_instagram_trending(access_token):
+    instagram_business_id = "your-instagram-business-id"
+    url = f"https://graph.facebook.com/v12.0/{instagram_business_id}/media?fields=id,caption,media_type,media_url,like_count,comments_count&access_token={access_token}"
+    response = requests.get(url)
+    data = response.json()
+
+    trending_data = [
+        {
+            "caption": post.get("caption", "No caption"),
+            "media_url": post.get("media_url"),
+            "likes": post.get("like_count", 0),
+            "comments": post.get("comments_count", 0),
+        }
+        for post in data.get("data", [])
+    ]
+    return trending_data
+
 # Sentiment Analysis
 def analyze_sentiment(text):
     sentiment = TextBlob(text).sentiment
@@ -41,6 +59,7 @@ st.sidebar.header("Filters")
 country = st.sidebar.selectbox("Select Country", ["US", "UK", "IN", "CA", "AU"])
 search_query = st.sidebar.text_input("Search Hashtags or Topics", "")
 theme = st.sidebar.selectbox("Select Theme", ["Light", "Dark"])
+access_token = st.sidebar.text_input("Instagram Access Token", type="password")
 st.sidebar.checkbox("Enable Real-Time Updates", value=False)
 
 # Theme Switcher
@@ -60,6 +79,17 @@ tiktok_trends = fetch_trending_tiktok()
 for trend in tiktok_trends:
     st.subheader(trend["title"])
     st.write(f"[Watch on TikTok]({trend['url']})")
+
+# Instagram Section
+st.header("Instagram Trending")
+if access_token:
+    instagram_trends = fetch_instagram_trending(access_token)
+    for trend in instagram_trends:
+        st.subheader(trend["caption"])
+        st.image(trend["media_url"])
+        st.write(f"Likes: {trend['likes']} | Comments: {trend['comments']}")
+else:
+    st.warning("Please provide an Instagram Access Token to fetch data.")
 
 # Search Feature
 if search_query:
