@@ -7,33 +7,36 @@ import pydeck as pdk
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import numpy as np
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 # --- Fetch Trending Data ---
 
-# TikTok Trending using Unofficial API
-def fetch_trending_tiktok_via_api(api_key, country):
-    url = "https://tiktok-api23.p.rapidapi.com/api/trending/commercial-music-library/playlist/detail"
-    params = {
-        "playlist_id": "6929526806429469442",
-        "page": 1,
-        "limit": 20,
-        "region": country
-    }
-    headers = {
-        "x-rapidapi-host": "tiktok-api23.p.rapidapi.com",
-        "x-rapidapi-key": api_key,
-    }
-    response = requests.get(url, headers=headers, params=params)
+# TikTok Trending using Selenium Web Scraper
+def fetch_trending_tiktok_via_scraper():
+    # Setting up the Selenium WebDriver
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-    if response.status_code != 200:
-        st.warning("Unable to fetch TikTok data. Please check your API key or try again later.")
-        return []
+    try:
+        driver.get("https://www.tiktok.com/trending")
+        time.sleep(5)  # Allow time for the page to load
 
-    data = response.json()
-    trending_data = [
-        {"title": item.get("title", "No title"), "url": item.get("url", "#")}
-        for item in data.get("data", [])
-    ]
+        trending_data = []
+        videos = driver.find_elements(By.XPATH, "//div[contains(@class, 'video-feed-item-wrapper')]//a")
+        for video in videos:
+            title = video.get_attribute("title") or "No title"
+            url = video.get_attribute("href")
+            trending_data.append({"title": title, "url": url})
+    finally:
+        driver.quit()
+
     return trending_data
 
 # Instagram Trending
@@ -70,7 +73,6 @@ st.markdown("---")
 st.sidebar.header("Filters")
 st.sidebar.markdown("Select filters to refine the content.")
 country = st.sidebar.text_input("Enter Country (e.g., US, UK, IN):", "US", help="Type the country code for trends.")
-api_key = st.sidebar.text_input("TikTok API Key", type="password", help="Enter your RapidAPI TikTok API key.")
 search_query = st.sidebar.text_input("Search Hashtags or Topics", "", help="Search specific hashtags or topics.")
 theme = st.sidebar.selectbox("Select Theme", ["Light", "Dark"], help="Choose a theme for the app.")
 access_token = st.sidebar.text_input("Instagram Access Token", type="password", help="Enter your Instagram Access Token.")
@@ -89,18 +91,15 @@ if theme == "Dark":
 
 # TikTok Section
 st.header("TikTok Trending")
-st.markdown(f"View the latest trending TikTok videos in {country.upper()}.")
+st.markdown(f"View the latest trending TikTok videos.")
 
-if api_key:
-    tiktok_trends = fetch_trending_tiktok_via_api(api_key, country)
-    if tiktok_trends:
-        for trend in tiktok_trends:
-            st.subheader(trend["title"])
-            st.write(f"[Watch on TikTok]({trend['url']})")
-    else:
-        st.warning("No trending TikTok videos found. Please check your input or try again later.")
+tiktok_trends = fetch_trending_tiktok_via_scraper()
+if tiktok_trends:
+    for trend in tiktok_trends:
+        st.subheader(trend["title"])
+        st.write(f"[Watch on TikTok]({trend['url']})")
 else:
-    st.warning("Please provide a TikTok API key to fetch data.")
+    st.warning("No trending TikTok videos found. Please check your input or try again later.")
 
 st.markdown("---")
 
