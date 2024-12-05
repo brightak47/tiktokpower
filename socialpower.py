@@ -7,36 +7,28 @@ import pydeck as pdk
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import numpy as np
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from playwright.sync_api import sync_playwright
 import time
 
 # --- Fetch Trending Data ---
 
-# TikTok Trending using Selenium Web Scraper
-def fetch_trending_tiktok_via_scraper():
-    # Setting up the Selenium WebDriver
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-    try:
-        driver.get("https://www.tiktok.com/trending")
+# TikTok Trending using Playwright Web Scraper
+def fetch_trending_tiktok_via_playwright():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto("https://www.tiktok.com/trending")
         time.sleep(5)  # Allow time for the page to load
 
         trending_data = []
-        videos = driver.find_elements(By.XPATH, "//div[contains(@class, 'video-feed-item-wrapper')]//a")
+        videos = page.query_selector_all("div.video-feed-item-wrapper a")
         for video in videos:
             title = video.get_attribute("title") or "No title"
             url = video.get_attribute("href")
             trending_data.append({"title": title, "url": url})
-    finally:
-        driver.quit()
 
+        browser.close()
+    
     return trending_data
 
 # Instagram Trending
@@ -93,7 +85,7 @@ if theme == "Dark":
 st.header("TikTok Trending")
 st.markdown(f"View the latest trending TikTok videos.")
 
-tiktok_trends = fetch_trending_tiktok_via_scraper()
+tiktok_trends = fetch_trending_tiktok_via_playwright()
 if tiktok_trends:
     for trend in tiktok_trends:
         st.subheader(trend["title"])
