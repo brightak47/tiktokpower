@@ -52,14 +52,18 @@ def analyze_sentiment(text):
 
 # --- Streamlit App ---
 
-st.title("Trending Content by Country")
+st.set_page_config(page_title="Influencer Agent Dashboard", page_icon="📊", layout="wide")
+
+st.title("Influencer Agent Dashboard")
+st.markdown("---")
 
 # Sidebar Filters
 st.sidebar.header("Filters")
-country = st.sidebar.selectbox("Select Country", ["US", "UK", "IN", "CA", "AU"])
-search_query = st.sidebar.text_input("Search Hashtags or Topics", "")
-theme = st.sidebar.selectbox("Select Theme", ["Light", "Dark"])
-access_token = st.sidebar.text_input("Instagram Access Token", type="password")
+st.sidebar.markdown("Select filters to refine the content.")
+country = st.sidebar.selectbox("Select Country", ["US", "UK", "IN", "CA", "AU"], help="Choose a country to view trends.")
+search_query = st.sidebar.text_input("Search Hashtags or Topics", "", help="Search specific hashtags or topics.")
+theme = st.sidebar.selectbox("Select Theme", ["Light", "Dark"], help="Choose a theme for the app.")
+access_token = st.sidebar.text_input("Instagram Access Token", type="password", help="Enter your Instagram Access Token.")
 st.sidebar.checkbox("Enable Real-Time Updates", value=False)
 
 # Theme Switcher
@@ -75,35 +79,52 @@ if theme == "Dark":
 
 # TikTok Section
 st.header("TikTok Trending")
+st.markdown("View the latest trending TikTok videos.")
 tiktok_trends = fetch_trending_tiktok()
-for trend in tiktok_trends:
-    st.subheader(trend["title"])
-    st.write(f"[Watch on TikTok]({trend['url']})")
+if tiktok_trends:
+    for trend in tiktok_trends:
+        st.subheader(trend["title"])
+        st.write(f"[Watch on TikTok]({trend['url']})")
+else:
+    st.info("No trending TikTok videos found.")
+
+st.markdown("---")
 
 # Instagram Section
 st.header("Instagram Trending")
+st.markdown("Explore the trending Instagram posts.")
 if access_token:
     instagram_trends = fetch_instagram_trending(access_token)
-    for trend in instagram_trends:
-        st.subheader(trend["caption"])
-        st.image(trend["media_url"])
-        st.write(f"Likes: {trend['likes']} | Comments: {trend['comments']}")
+    if instagram_trends:
+        for trend in instagram_trends:
+            st.subheader(trend["caption"])
+            st.image(trend["media_url"], caption=f"Likes: {trend['likes']} | Comments: {trend['comments']}")
+    else:
+        st.info("No trending Instagram posts found.")
 else:
     st.warning("Please provide an Instagram Access Token to fetch data.")
+
+st.markdown("---")
 
 # Search Feature
 if search_query:
     st.header(f"Results for '{search_query}'")
     st.write("This feature is under development for TikTok and Instagram APIs.")
 
+st.markdown("---")
+
 # Sentiment Analysis Section
 st.header("Sentiment Analysis")
+st.markdown("Analyze the sentiment of trending content.")
 sample_text = "TikTok's latest trend is amazing!"
 polarity, subjectivity = analyze_sentiment(sample_text)
-st.write(f"Sentiment Polarity: {polarity:.2f}, Subjectivity: {subjectivity:.2f}")
+st.write(f"**Sentiment Polarity**: {polarity:.2f}, **Subjectivity**: {subjectivity:.2f}")
+
+st.markdown("---")
 
 # Word Cloud
 st.header("Trending Hashtag Cloud")
+st.markdown("Visualize popular hashtags as a word cloud.")
 hashtags = " ".join(["#Dance", "#Music", "#Tech", "#Fashion", "#Style", "#Viral"])
 wordcloud = WordCloud(width=800, height=400, background_color="white").generate(hashtags)
 plt.figure(figsize=(10, 5))
@@ -111,8 +132,11 @@ plt.imshow(wordcloud, interpolation="bilinear")
 plt.axis("off")
 st.pyplot(plt)
 
+st.markdown("---")
+
 # Map Visualization
 st.header("Trending Map")
+st.markdown("See trends geographically represented on the map.")
 map_data = pd.DataFrame({
     'Country': ['US', 'UK', 'IN'],
     'Lat': [37.0902, 55.3781, 20.5937],
@@ -138,8 +162,11 @@ st.pydeck_chart(pdk.Deck(
     ],
 ))
 
+st.markdown("---")
+
 # Leaderboard
 st.header("Trending Leaderboard")
+st.markdown("Discover the top hashtags ranked by mentions.")
 leaderboard = pd.DataFrame({
     'Rank': [1, 2, 3],
     'Hashtag': ['#Dance', '#Fashion', '#Tech'],
@@ -147,20 +174,28 @@ leaderboard = pd.DataFrame({
 })
 st.table(leaderboard)
 
+st.markdown("---")
+
 # ML Trend Prediction
 st.header("Trend Predictions")
+st.markdown("Predict future popularity trends using machine learning.")
 data = {'Day': [1, 2, 3, 4, 5], 'Mentions': [100, 150, 200, 300, 400]}
 df = pd.DataFrame(data)
 X = np.array(df['Day']).reshape(-1, 1)
 y = df['Mentions']
 model = LinearRegression().fit(X, y)
 future_prediction = model.predict([[6]])[0]
-st.write(f"Predicted Mentions for Day 6: {int(future_prediction)}")
+st.write(f"**Predicted Mentions for Day 6**: {int(future_prediction)}")
+
+st.markdown("---")
 
 # Notifications for New Trends
 if st.button("Check for New Trends"):
     st.success("New trends are now available!")
 
+st.markdown("---")
+
 # Share Button
 st.header("Share Trends")
-st.markdown('[Share on Twitter](https://twitter.com/intent/tweet?url=https://example.com&text=Check+this+out!)')
+st.markdown("Spread the word about trending content.")
+# st.markdown('[Share on Twitter](https://twitter.com/intent/tweet?url=https://example.com&text=Check+this+out!)')
