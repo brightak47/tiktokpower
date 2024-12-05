@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
 from textblob import TextBlob
 from wordcloud import WordCloud
 import pydeck as pdk
@@ -11,27 +10,24 @@ import numpy as np
 
 # --- Fetch Trending Data ---
 
-# TikTok Trending
-def fetch_trending_tiktok():
-    url = "https://www.tiktok.com/trending"
+# TikTok Trending using Unofficial API
+def fetch_trending_tiktok_via_api(country):
+    url = "https://tiktok33.p.rapidapi.com/trending"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "X-RapidAPI-Key": "your-rapidapi-key",  # Replace with your RapidAPI key
+        "X-RapidAPI-Host": "tiktok33.p.rapidapi.com",
     }
     response = requests.get(url, headers=headers)
-    
-    # Check if the response is successful
+
     if response.status_code != 200:
+        st.warning("Unable to fetch TikTok data. Please check your API key or try again later.")
         return []
 
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    trending_data = []
-    # Update this part based on the current structure of TikTok's page
-    for video in soup.find_all("a", class_="video-feed-item-link"):  # Adjust the tag and class
-        title = video.get("title", "No title")
-        url = f"https://www.tiktok.com{video['href']}" if video.has_attr("href") else "No URL"
-        trending_data.append({"title": title, "url": url})
-    
+    data = response.json()
+    trending_data = [
+        {"title": video.get("title", "No title"), "url": video.get("videoUrl", "#")}
+        for video in data
+    ]
     return trending_data
 
 # Instagram Trending
@@ -67,7 +63,7 @@ st.markdown("---")
 # Sidebar Filters
 st.sidebar.header("Filters")
 st.sidebar.markdown("Select filters to refine the content.")
-country = st.sidebar.selectbox("Select Country", ["US", "UK", "IN", "CA", "AU"], help="Choose a country to view trends.")
+country = st.sidebar.text_input("Enter Country (e.g., US, UK, IN):", "US", help="Type the country code for trends.")
 search_query = st.sidebar.text_input("Search Hashtags or Topics", "", help="Search specific hashtags or topics.")
 theme = st.sidebar.selectbox("Select Theme", ["Light", "Dark"], help="Choose a theme for the app.")
 access_token = st.sidebar.text_input("Instagram Access Token", type="password", help="Enter your Instagram Access Token.")
@@ -86,14 +82,15 @@ if theme == "Dark":
 
 # TikTok Section
 st.header("TikTok Trending")
-st.markdown("View the latest trending TikTok videos.")
-tiktok_trends = fetch_trending_tiktok()
+st.markdown(f"View the latest trending TikTok videos in {country.upper()}.")
+
+tiktok_trends = fetch_trending_tiktok_via_api(country)
 if tiktok_trends:
     for trend in tiktok_trends:
         st.subheader(trend["title"])
         st.write(f"[Watch on TikTok]({trend['url']})")
 else:
-    st.warning("Unable to fetch TikTok data. Please check the scraping logic or try again later.")
+    st.warning("No trending TikTok videos found. Please check your input or try again later.")
 
 st.markdown("---")
 
@@ -110,13 +107,6 @@ if access_token:
         st.info("No trending Instagram posts found.")
 else:
     st.warning("Please provide an Instagram Access Token to fetch data.")
-
-st.markdown("---")
-
-# Search Feature
-if search_query:
-    st.header(f"Results for '{search_query}'")
-    st.write("This feature is under development for TikTok and Instagram APIs.")
 
 st.markdown("---")
 
@@ -205,4 +195,4 @@ st.markdown("---")
 # Share Button
 st.header("Share Trends")
 st.markdown("Spread the word about trending content.")
-# st.markdown('[Share on Twitter](https://twitter.com/intent/tweet?url=https://example.com&text=Check+this+out!)')
+st.markdown('[Share on Twitter](https://twitter.com/intent/tweet?url=https://example.com&text=Check+this+out!)')
