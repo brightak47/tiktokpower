@@ -7,5 +7,4 @@ wordcloud
 pydeck
 matplotlib
 scikit-learn
-selenium
-webdriver-manager
+playwright
