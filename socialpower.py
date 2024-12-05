@@ -18,13 +18,20 @@ def fetch_trending_tiktok():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     response = requests.get(url, headers=headers)
+    
+    # Check if the response is successful
+    if response.status_code != 200:
+        return []
+
     soup = BeautifulSoup(response.content, "html.parser")
 
     trending_data = []
-    for video in soup.find_all("div", class_="video-feed-item-wrapper"):
-        title = video.find("h3").text if video.find("h3") else "No title"
-        video_url = video.find("a", href=True)["href"]
-        trending_data.append({"title": title, "url": video_url})
+    # Update this part based on the current structure of TikTok's page
+    for video in soup.find_all("a", class_="video-feed-item-link"):  # Adjust the tag and class
+        title = video.get("title", "No title")
+        url = f"https://www.tiktok.com{video['href']}" if video.has_attr("href") else "No URL"
+        trending_data.append({"title": title, "url": url})
+    
     return trending_data
 
 # Instagram Trending
@@ -86,7 +93,7 @@ if tiktok_trends:
         st.subheader(trend["title"])
         st.write(f"[Watch on TikTok]({trend['url']})")
 else:
-    st.info("No trending TikTok videos found.")
+    st.warning("Unable to fetch TikTok data. Please check the scraping logic or try again later.")
 
 st.markdown("---")
 
