@@ -12,12 +12,18 @@ import numpy as np
 
 # TikTok Trending using Unofficial API
 def fetch_trending_tiktok_via_api(api_key, country):
-    url = "https://tiktok33.p.rapidapi.com/trending"
-    headers = {
-        "X-RapidAPI-Key": api_key,  # Use API key from sidebar input
-        "X-RapidAPI-Host": "tiktok33.p.rapidapi.com",
+    url = "https://tiktok-api23.p.rapidapi.com/api/trending/commercial-music-library/playlist/detail"
+    params = {
+        "playlist_id": "6929526806429469442",
+        "page": 1,
+        "limit": 20,
+        "region": country
     }
-    response = requests.get(url, headers=headers)
+    headers = {
+        "x-rapidapi-host": "tiktok-api23.p.rapidapi.com",
+        "x-rapidapi-key": api_key,
+    }
+    response = requests.get(url, headers=headers, params=params)
 
     if response.status_code != 200:
         st.warning("Unable to fetch TikTok data. Please check your API key or try again later.")
@@ -25,8 +31,8 @@ def fetch_trending_tiktok_via_api(api_key, country):
 
     data = response.json()
     trending_data = [
-        {"title": video.get("title", "No title"), "url": video.get("videoUrl", "#")}
-        for video in data
+        {"title": item.get("title", "No title"), "url": item.get("url", "#")}
+        for item in data.get("data", [])
     ]
     return trending_data
 
