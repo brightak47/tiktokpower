@@ -11,10 +11,10 @@ import numpy as np
 # --- Fetch Trending Data ---
 
 # TikTok Trending using Unofficial API
-def fetch_trending_tiktok_via_api(country):
+def fetch_trending_tiktok_via_api(api_key, country):
     url = "https://tiktok33.p.rapidapi.com/trending"
     headers = {
-        "X-RapidAPI-Key": "your-rapidapi-key",  # Replace with your RapidAPI key
+        "X-RapidAPI-Key": api_key,  # Use API key from sidebar input
         "X-RapidAPI-Host": "tiktok33.p.rapidapi.com",
     }
     response = requests.get(url, headers=headers)
@@ -64,6 +64,7 @@ st.markdown("---")
 st.sidebar.header("Filters")
 st.sidebar.markdown("Select filters to refine the content.")
 country = st.sidebar.text_input("Enter Country (e.g., US, UK, IN):", "US", help="Type the country code for trends.")
+api_key = st.sidebar.text_input("TikTok API Key", type="password", help="Enter your RapidAPI TikTok API key.")
 search_query = st.sidebar.text_input("Search Hashtags or Topics", "", help="Search specific hashtags or topics.")
 theme = st.sidebar.selectbox("Select Theme", ["Light", "Dark"], help="Choose a theme for the app.")
 access_token = st.sidebar.text_input("Instagram Access Token", type="password", help="Enter your Instagram Access Token.")
@@ -84,13 +85,16 @@ if theme == "Dark":
 st.header("TikTok Trending")
 st.markdown(f"View the latest trending TikTok videos in {country.upper()}.")
 
-tiktok_trends = fetch_trending_tiktok_via_api(country)
-if tiktok_trends:
-    for trend in tiktok_trends:
-        st.subheader(trend["title"])
-        st.write(f"[Watch on TikTok]({trend['url']})")
+if api_key:
+    tiktok_trends = fetch_trending_tiktok_via_api(api_key, country)
+    if tiktok_trends:
+        for trend in tiktok_trends:
+            st.subheader(trend["title"])
+            st.write(f"[Watch on TikTok]({trend['url']})")
+    else:
+        st.warning("No trending TikTok videos found. Please check your input or try again later.")
 else:
-    st.warning("No trending TikTok videos found. Please check your input or try again later.")
+    st.warning("Please provide a TikTok API key to fetch data.")
 
 st.markdown("---")
 
