@@ -7,29 +7,21 @@ import pydeck as pdk
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import numpy as np
-from playwright.sync_api import sync_playwright
-import time
+from pytrends.request import TrendReq
 
 # --- Fetch Trending Data ---
 
-# TikTok Trending using Playwright Web Scraper
-def fetch_trending_tiktok_via_playwright():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        page.goto("https://www.tiktok.com/trending")
-        time.sleep(5)  # Allow time for the page to load
+# TikTok Trending using Pytrends (Google Trends Data)
+def fetch_google_trends_tiktok(country_code="US"):
+    pytrends = TrendReq(hl='en-US', tz=360)
+    kw_list = ["TikTok", "TikTok trends", "TikTok challenges"]
+    pytrends.build_payload(kw_list, cat=0, timeframe='now 7-d', geo=country_code, gprop='')
 
-        trending_data = []
-        videos = page.query_selector_all("div.video-feed-item-wrapper a")
-        for video in videos:
-            title = video.get_attribute("title") or "No title"
-            url = video.get_attribute("href")
-            trending_data.append({"title": title, "url": url})
-
-        browser.close()
-    
-    return trending_data
+    trending_data = pytrends.interest_over_time()
+    if not trending_data.empty:
+        return trending_data
+    else:
+        return None
 
 # Instagram Trending
 def fetch_instagram_trending(access_token):
@@ -81,17 +73,15 @@ if theme == "Dark":
         unsafe_allow_html=True,
     )
 
-# TikTok Section
-st.header("TikTok Trending")
-st.markdown(f"View the latest trending TikTok videos.")
+# TikTok Section Using Pytrends
+st.header("Google Trends Related to TikTok")
+st.markdown(f"View the latest Google search trends related to TikTok in {country.upper()}.")
 
-tiktok_trends = fetch_trending_tiktok_via_playwright()
-if tiktok_trends:
-    for trend in tiktok_trends:
-        st.subheader(trend["title"])
-        st.write(f"[Watch on TikTok]({trend['url']})")
+tiktok_trends = fetch_google_trends_tiktok(country_code=country)
+if tiktok_trends is not None and not tiktok_trends.empty:
+    st.line_chart(tiktok_trends)
 else:
-    st.warning("No trending TikTok videos found. Please check your input or try again later.")
+    st.warning("No trending data found for TikTok-related searches. Please try again later.")
 
 st.markdown("---")
 
