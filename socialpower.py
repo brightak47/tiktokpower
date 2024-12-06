@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from pytrends.request import TrendReq
+import random
+import time
 
 # --- Fetch Trending Data ---
 
@@ -15,12 +17,17 @@ from pytrends.request import TrendReq
 def fetch_google_trends_tiktok(country_code="US"):
     pytrends = TrendReq(hl='en-US', tz=360)
     kw_list = ["TikTok", "TikTok trends", "TikTok challenges"]
-    pytrends.build_payload(kw_list, cat=0, timeframe='now 7-d', geo=country_code, gprop='')
-
-    trending_data = pytrends.interest_over_time()
-    if not trending_data.empty:
-        return trending_data
-    else:
+    try:
+        pytrends.build_payload(kw_list, cat=0, timeframe='now 7-d', geo=country_code, gprop='')
+        # Adding a delay to avoid being blocked
+        time.sleep(random.uniform(10, 30))  # Random delay between 10 and 30 seconds
+        trending_data = pytrends.interest_over_time()
+        if not trending_data.empty:
+            return trending_data
+        else:
+            return None
+    except Exception as e:
+        st.warning("An error occurred while fetching Google Trends data. Please try again later.")
         return None
 
 # Instagram Trending
